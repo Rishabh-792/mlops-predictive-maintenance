@@ -18,11 +18,13 @@ logger = logging.getLogger(__name__)
 # SETTINGS DATACLASSES
 # =========================================================================
 
+
 @dataclass
 class SchemaSettings:
     mandatory_features: List[str]
     categorical_features: List[str]
     target_variable: str
+
 
 @dataclass
 class TemporalSettings:
@@ -30,10 +32,12 @@ class TemporalSettings:
     train_end_date: str
     prediction_window_days: int
 
+
 @dataclass
 class SegmentSettings:
     min_activity_threshold: int
     max_activity_threshold: int = None
+
 
 @dataclass
 class PipelineSettings:
@@ -53,7 +57,7 @@ class SettingsManager:
 
     def __init__(
         self,
-        settings_path: str = "configs/settings.json",
+        settings_path: str = "configs/config.json",
         goal: OptimizationGoal = OptimizationGoal.BALANCED,
     ) -> None:
         self.settings_path = Path(settings_path)
@@ -70,19 +74,20 @@ class SettingsManager:
 
     def _read_json(self, path: Path) -> Dict[str, Any]:
         if not path.exists():
-            raise ConfigurationFault(f"Settings file missing at {path}", code="SYS-201")
+            raise ConfigurationFault(
+                f"Settings file missing at {path}", code="SYS-201")
         with open(path, "r", encoding="utf-8") as file:
             return json.load(file)
 
     def _build_settings_object(self, data: Dict[str, Any]) -> PipelineSettings:
         schema = SchemaSettings(**data.get("schema", {}))
         temporal = TemporalSettings(**data.get("temporal", {}))
-        
+
         segments = {
-            k: SegmentSettings(**v) 
+            k: SegmentSettings(**v)
             for k, v in data.get("segments", {}).items()
         }
-        
+
         return PipelineSettings(
             project_name=data.get("project_name", "Unknown"),
             schema=schema,

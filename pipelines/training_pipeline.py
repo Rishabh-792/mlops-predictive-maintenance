@@ -14,26 +14,30 @@ Results are logged to MLflow.
 Configuration is fully externalized.
 """
 
+import pandas as pd  # Mocking data load
+from model_training_utils import train_segment_model
+from settings_manager import SettingsManager
+from pipeline_enums import UserSegment, OptimizationGoal
 import logging
 import sys
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Tuple
+
+import mlflow
 
 # Ensure utils can be imported
 sys.path.insert(0, str(Path(__file__).parent.parent / "utils"))
 
-from pipeline_enums import UserSegment, OptimizationGoal
-from settings_manager import SettingsManager
-from model_training_utils import train_segment_model
-import pandas as pd # Mocking data load
 
 logger = logging.getLogger(__name__)
 
+
 class TrainingPipeline:
-    def __init__(self, config_path: str = "configs/settings.json"):
-        self.settings_manager = SettingsManager(config_path, goal=OptimizationGoal.BALANCED)
+    def __init__(self, config_path: str = "configs/config.json"):
+        self.settings_manager = SettingsManager(
+            config_path, goal=OptimizationGoal.BALANCED)
         self.settings = self.settings_manager.load()
-        
+
         # Set up MLflow
         mlflow.set_tracking_uri("sqlite:///mlflow.db")
         mlflow.set_experiment(self.settings.project_name)
@@ -42,25 +46,26 @@ class TrainingPipeline:
         """Mock data loading function."""
         # Replace with actual data loading logic
         df = pd.DataFrame({"target": [0, 1, 0, 1] * 25})
-        features = pd.DataFrame({"feat1": range(100), "feat2": ["A", "B"] * 50})
+        features = pd.DataFrame(
+            {"feat1": range(100), "feat2": ["A", "B"] * 50})
         return df, features
 
     def run(self) -> Dict[str, str]:
         """Executes the pipeline and returns a dictionary of MLflow model URIs."""
         logger.info("Starting ensemble training pipeline...")
-        
+
         raw_df, feature_df = self.load_data()
         model_uris = {}
-        
+
         segments = ["power_user", "casual"]
         model_types = ["activity", "profile"]
-        
+
         with mlflow.start_run(run_name="Ensemble_Master_Run"):
             for segment in segments:
                 for m_type in model_types:
                     identifier = f"{segment}_{m_type}"
                     logger.info(f"--- Training {identifier.upper()} ---")
-                    
+
                     try:
                         _, uri = train_segment_model(
                             raw_df=raw_df,
@@ -71,10 +76,12 @@ class TrainingPipeline:
                         )
                         model_uris[identifier] = uri
                     except Exception as e:
-                        logger.error(f"Training failed for {identifier}: {str(e)}")
-                        
+                        logger.error(
+                            f"Training failed for {identifier}: {str(e)}")
+
         logger.info("Pipeline execution complete.")
         return model_uris
+
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)

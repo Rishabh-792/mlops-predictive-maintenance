@@ -12,23 +12,28 @@ Pipeline steps:
 6. Format and save results
 """
 
+import pandas as pd
+from prediction_utils import EnsembleModels
+from settings_manager import SettingsManager
+from pipeline_enums import OptimizationGoal
 import logging
 import sys
 from pathlib import Path
 
+import mlflow
+from catboost import CatBoostClassifier
+
 # Add utils to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "utils"))
 
-from pipeline_enums import OptimizationGoal
-from settings_manager import SettingsManager
-from prediction_utils import EnsembleModels
-import pandas as pd
 
 logger = logging.getLogger(__name__)
 
+
 class PredictionPipeline:
-    def __init__(self, config_path: str = "configs/settings.json"):
-        self.settings = SettingsManager(config_path, goal=OptimizationGoal.BALANCED).load()
+    def __init__(self, config_path: str = "configs/config.json"):
+        self.settings = SettingsManager(
+            config_path, goal=OptimizationGoal.BALANCED).load()
         self.models = None
 
     def _load_models(self) -> None:
@@ -45,7 +50,7 @@ class PredictionPipeline:
     def run(self) -> pd.DataFrame:
         self._load_models()
         logger.info("Generating predictions...")
-        
+
         # Mocking the feature building and prediction logic
         results = pd.DataFrame({
             "user_id": ["u1", "u2", "u3"],
@@ -53,8 +58,9 @@ class PredictionPipeline:
             "churn_risk_score": [0.85, 0.12, 0.65],
             "recommended_action": ["High Priority Retention", "None", "Standard Outreach"]
         })
-        
+
         return results
+
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
