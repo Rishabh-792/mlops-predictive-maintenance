@@ -1,0 +1,35 @@
+{
+  "project_name": "Customer Engagement and Churn Prediction Pipeline",
+  "schema": {
+    "mandatory_features": [
+      "user_id",
+      "account_creation_date",
+      "total_sessions",
+      "last_active_date"
+    ],
+    "categorical_features": [
+      "subscription_plan",
+      "acquisition_channel",
+      "primary_device_os"
+    ],
+    "target_variable": "will_churn_in_window"
+  },
+  "temporal": {
+    "train_start_date": "2023-01-01",
+    "train_end_date": "2024-12-31",
+    "prediction_window_days": 30
+  },
+  "segments": {
+    "power_user": {
+      "min_activity_threshold": 25
+    },
+    "casual": {
+      "min_activity_threshold": 5,
+      "max_activity_threshold": 24
+    },
+    "guest": {
+      "min_activity_threshold": 0,
+      "max_activity_threshold": 4
+    }
+  }
+}
